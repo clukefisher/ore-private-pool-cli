@@ -1,6 +1,8 @@
 # Yolo and Solo Your Private Pool for ORE Mining
 
-**This is pool client. Forked from [ore-hq-client](https://github.com/Kriptikz/ore-hq-client.git). Tailored by Miraland Labs.**
+**The goal of this project is to balance the ever-growing public pool and decentralize computing power, in line with the ORE design principle: anyone can mine. As expected, more individual miners.**
+
+**This is private pool client. Forked from [ore-hq-client](https://github.com/Kriptikz/ore-hq-client.git). Tailored by Miraland Labs.**
 
 A lightweight release of Ore mining private pool client. Derived from and credited to ore-hq-client.
 
