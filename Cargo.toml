@@ -1,24 +1,29 @@
 [package]
-name = "ore-hq-client"
-version = "2.0.0"
+name = "ore-private-pool-cli"
+version = "0.5.0"
 edition = "2021"
-description = "Ore mining pool client."
 license = "Apache-2.0"
-repository = "https://github.com/Kriptikz/ore-hq-client"
-keywords = ["solana", "crypto", "mining", "client", "mining-pool"]
+description = "A lightweight release of Ore mining private pool client. derived from and credited to ore-hq-client."
+repository = "https://github.com/miraland-labs/ore-private-pool-cli"
+readme = "./README.md"
+keywords = ["solana", "crypto", "ore", "miraland", "mining-pool"]
+
+[[bin]]
+name = "ore-ppl-cli"
+path = "src/main.rs"
 
 [dependencies]
 base64 = "0.22.1"
 bincode = "1.3.3"
 clap = { version = "4.5.13", features = ["derive"] }
 core_affinity = "0.8.1"
-ore-api = "2.1.8"
-ore-utils = "2.1.8"
-drillx_2 = "1.0.0"
+ore-api = "2.1.0"
+ore-utils = "2.1.0"
+drillx = { package = "marsh-drillx", version = "2.1.0" }
 futures-util = "0.3.30"
 reqwest = "^0.11.0"
 rpassword = "7.3.1"
-solana-sdk = "1.18.21"
+solana-sdk = "1.18.12"
 tokio = { version = "1.39.2", features = ["full"] }
 tokio-tungstenite = { version = "0.23.1", features = ["native-tls"] }
 url = "2.5.2"
@@ -27,20 +32,13 @@ rayon = "1.10"
 crossbeam = "0.8.0"
 rand = "0.8.4"
 rand_chacha = "0.3.0"
-inquire = "0.7.5"
-home = "0.5.9"
-dirs = "5.0.1"
-colored = "2.0"
-indicatif = "0.17"
-spl-associated-token-account = { version = "2.2", features = ["no-entrypoint"] }
-ore-miner-delegation = { version = "0.4.0", features = ["no-entrypoint"] }
 
 [profile.release]
-opt-level = 3     # Full optimisations
-codegen-units = 1 # Better optimization with fewer codegen units
-lto = true        # Enable Link Time Optimization (LTO)
-debug = false     # Disable debug info to reduce binary size
-panic = 'abort'   # Reduces the binary size further by not including unwinding information
+opt-level = 3           # Full optimisations
+codegen-units = 1       # Better optimization with fewer codegen units
+lto = true              # Enable Link Time Optimization (LTO)
+debug = false           # Disable debug info to reduce binary size
+panic = 'abort'         # Reduces the binary size further by not including unwinding information
 rpath = false
 incremental = false
 overflow-checks = false
