@@ -254,9 +254,17 @@ pub async fn mine(args: MineArgs, key: Keypair, url: String, unsecure: bool) {
                 while let Some(msg) = message_receiver.recv().await {
                     match msg {
                         ServerMessage::StartMining(challenge, nonce_range, cutoff) => {
-                            println!("Received start mining message!");
-                            println!("Mining starting (Using Protomine)...");
+                            // println!("Received start mining message!");
+                            // println!("Mining starting (Using Protomine)...");
+                            println!(
+                                "\nMission received. New Challenge: {}",
+                                BASE64_STANDARD.encode(challenge)
+                            );
                             println!("Nonce range: {} - {}", nonce_range.start, nonce_range.end);
+                            println!(
+                                "Start mining(Using Protomine)... will cutoff in: {}s",
+                                cutoff
+                            );
                             let hash_timer = Instant::now();
 
                             let cutoff_time = cutoff; // Use the provided cutoff directly
@@ -266,7 +274,7 @@ pub async fn mine(args: MineArgs, key: Keypair, url: String, unsecure: bool) {
 
                             let hash_time = hash_timer.elapsed();
 
-                            println!("Found best diff: {}", best_difficulty);
+                            println!("✨ Mission completed! Best diff found: {}", best_difficulty);
                             println!("Processed: {}", total_nonces_checked);
                             println!("Hash time: {:?}", hash_time);
                             if hash_time.as_secs().gt(&0) {

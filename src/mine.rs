@@ -28,7 +28,7 @@ pub struct MineArgs {
     #[arg(
         long,
         value_name = "CORES",
-        default_value = "1",
+        default_value = "4",
         help = "Number of cores to use while mining"
     )]
     pub cores: u32,
@@ -117,9 +117,14 @@ pub async fn mine(args: MineArgs, key: Keypair, url: String, unsecure: bool) {
                 while let Some(msg) = message_receiver.recv().await {
                     match msg {
                         ServerMessage::StartMining(challenge, nonce_range, cutoff) => {
-                            println!("Received start mining message!");
-                            println!("Mining starting...");
+                            // println!("Received start mining message!");
+                            // println!("Start mining...");
+                            println!(
+                                "\nMission received. New Challenge: {}",
+                                BASE64_STANDARD.encode(challenge)
+                            );
                             println!("Nonce range: {} - {}", nonce_range.start, nonce_range.end);
+                            println!("Start mining... will cutoff in: {}s", cutoff);
                             let hash_timer = Instant::now();
                             let core_ids = core_affinity::get_core_ids().unwrap();
                             let nonces_per_thread = 10_000;
@@ -207,7 +212,7 @@ pub async fn mine(args: MineArgs, key: Keypair, url: String, unsecure: bool) {
 
                             let hash_time = hash_timer.elapsed();
 
-                            println!("Found best diff: {}", best_difficulty);
+                            println!("✨ Mission completed! Best diff found: {}", best_difficulty);
                             println!("Processed: {}", total_nonces_checked);
                             println!("Hash time: {:?}", hash_time);
                             if hash_time.as_secs().gt(&0) {

@@ -4,7 +4,7 @@
 
 **This is private pool client. Forked from [ore-hq-client](https://github.com/Kriptikz/ore-hq-client.git).**
 
-It's tailored by Miraland Labs as a lightweight release, **derived from and credited to ore-hq-server.**
+It's tailored by Miraland Labs as a lightweight release, **derived from and credited to ore-hq-client.**
 
 ## Key Differentiators of the Private Pool
 
