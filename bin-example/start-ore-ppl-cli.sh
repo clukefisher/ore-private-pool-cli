@@ -16,8 +16,7 @@ CORES=8
 #         --use-http \
 #         --url 192.168.xx.xx:3000 \
 #         --keypair $MKP \
-#         mine --cores 8 \
-#         --expected-min-difficulty 17
+#         mine --cores 8
 
 CMD="$CLI \
         --use-http \

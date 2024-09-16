@@ -177,6 +177,11 @@ pub async fn mine(args: MineArgs, key: Keypair, url: String, unsecure: bool) {
     let mut cores = args.cores;
     let max_cores = core_affinity::get_core_ids().unwrap().len();
     if cores > max_cores {
+        println!(
+            "Arg --cores {} exceeds max available cores({}), the exceeding part will be ignored.",
+            cores, max_cores
+        );
+
         cores = max_cores
     }
 

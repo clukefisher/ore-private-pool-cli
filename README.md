@@ -51,7 +51,7 @@ If you run into issues during installation, please install the following depende
 #### Linux
 
 ```
-sudo apt-get install openssl pkg-config libssl-dev
+sudo apt-get install openssl pkg-config libssl-dev gcc
 ```
 
 #### MacOS (using [Homebrew](https://brew.sh/))

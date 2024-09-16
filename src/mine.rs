@@ -61,7 +61,7 @@ pub async fn mine(args: MineArgs, key: Keypair, url: String, unsecure: bool) {
         ws_url_str.push_str(&format!("?timestamp={}", now));
         let url = url::Url::parse(&ws_url_str).expect("Failed to parse server url");
         let host = url.host_str().expect("Invalid host in server url");
-        let threads = args.cores;
+        let mut threads = args.cores;
 
         let auth = BASE64_STANDARD.encode(format!("{}:{}", key.pubkey(), sig));
 
@@ -127,6 +127,16 @@ pub async fn mine(args: MineArgs, key: Keypair, url: String, unsecure: bool) {
                             println!("Start mining... will cutoff in: {}s", cutoff);
                             let hash_timer = Instant::now();
                             let core_ids = core_affinity::get_core_ids().unwrap();
+                            // let max_cores = std::thread::available_parallelism().unwrap().get();
+                            let max_cores = core_ids.len();
+                            if threads > max_cores as u32 {
+                                println!(
+                                    "Arg --cores {} exceeds available cores({}), the exceeding part will be ignored.",
+                                    threads, max_cores
+                                );
+
+                                threads = max_cores as u32
+                            }
                             let nonces_per_thread = 10_000;
                             let handles = core_ids
                                 .into_iter()
