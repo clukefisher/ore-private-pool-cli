@@ -259,8 +259,6 @@ pub async fn mine(args: MineArgs, key: Keypair, url: String, unsecure: bool) {
                 while let Some(msg) = message_receiver.recv().await {
                     match msg {
                         ServerMessage::StartMining(challenge, nonce_range, cutoff) => {
-                            // println!("Received start mining message!");
-                            // println!("Mining starting (Using Protomine)...");
                             println!(
                                 "\nMission received. New Challenge: {}",
                                 BASE64_STANDARD.encode(challenge)

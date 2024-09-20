@@ -1,6 +1,6 @@
 [package]
 name = "ore-private-pool-cli"
-version = "0.5.2"
+version = "0.6.0"
 edition = "2021"
 license = "Apache-2.0"
 description = "A lightweight release of Ore mining private pool client. derived from and credited to ore-hq-client."
@@ -43,5 +43,5 @@ rpath = false
 incremental = false
 overflow-checks = false
 
-[build]
-rustflags = ["-C", "target-cpu=native"]
+# [build]
+# rustflags = ["-C", "target-cpu=native"]
