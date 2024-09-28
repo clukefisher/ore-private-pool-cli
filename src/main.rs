@@ -1,8 +1,11 @@
 use clap::{Parser, Subcommand};
 use solana_sdk::signature::read_keypair_file;
 
+mod generate_key;
 mod mine;
 mod protomine;
+
+const CONFIG_FILE: &str = "keypair_list";
 
 /// A command line interface tool for pooling power to submit hashes for proportional ORE rewards
 #[derive(Parser, Debug)]
@@ -42,6 +45,8 @@ enum Commands {
     Mine(mine::MineArgs),
     #[command(about = "Connect to pool and start mining. (Protomine Implementation)")]
     Protomine(protomine::MineArgs),
+    #[command(about = "Generate a new solana keypair for mining.")]
+    Keygen,
 }
 
 #[tokio::main]
@@ -59,7 +64,10 @@ async fn main() {
             mine::mine(args, key, base_url, unsecure_conn).await;
         }
         Commands::Protomine(args) => {
-            protomine::mine(args, key, base_url, unsecure_conn).await;
+            protomine::protomine(args, key, base_url, unsecure_conn).await;
+        }
+        Commands::Keygen => {
+            generate_key::generate_key();
         }
     }
 }

@@ -173,7 +173,7 @@ fn optimized_mining_rayon(
     )
 }
 
-pub async fn mine(args: MineArgs, key: Keypair, url: String, unsecure: bool) {
+pub async fn protomine(args: MineArgs, key: Keypair, url: String, unsecure: bool) {
     let mut cores = args.cores;
     let max_cores = core_affinity::get_core_ids().unwrap().len();
     if cores > max_cores {

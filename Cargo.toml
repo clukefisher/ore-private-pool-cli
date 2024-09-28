@@ -1,6 +1,6 @@
 [package]
 name = "ore-private-pool-cli"
-version = "0.6.0"
+version = "1.0.0"
 edition = "2021"
 license = "Apache-2.0"
 description = "A lightweight release of Ore mining private pool client. derived from and credited to ore-hq-client."
@@ -32,6 +32,13 @@ rayon = "1.10"
 crossbeam = "0.8.0"
 rand = "0.8.4"
 rand_chacha = "0.3.0"
+# inquire = "0.7.5"
+dirs = "5.0.1"
+# colored = "2.0"
+# indicatif = "0.17"
+# spl-associated-token-account = { version = "2.2", features = ["no-entrypoint"] }
+tiny-bip39 = "0.8.2"
+qrcode = "0.14.1"
 
 [profile.release]
 opt-level = 3           # Full optimisations
