@@ -27,12 +27,7 @@ struct Args {
     )]
     keypair: String,
 
-    #[arg(
-        long,
-        short,
-        action,
-        help = "Use unsecure http connection instead of https."
-    )]
+    #[arg(long, short, action, help = "Use unsecure http connection instead of https.")]
     use_http: bool,
 
     #[command(subcommand)]
@@ -55,19 +50,17 @@ async fn main() {
 
     let base_url = args.url;
     let unsecure_conn = args.use_http;
-    let key = read_keypair_file(args.keypair.clone()).expect(&format!(
-        "Failed to load keypair from file: {}",
-        args.keypair
-    ));
+    let key = read_keypair_file(args.keypair.clone())
+        .expect(&format!("Failed to load keypair from file: {}", args.keypair));
     match args.command {
         Commands::Mine(args) => {
             mine::mine(args, key, base_url, unsecure_conn).await;
-        }
+        },
         Commands::Protomine(args) => {
             protomine::protomine(args, key, base_url, unsecure_conn).await;
-        }
+        },
         Commands::Keygen => {
             generate_key::generate_key();
-        }
+        },
     }
 }

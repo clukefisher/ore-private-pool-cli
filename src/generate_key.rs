@@ -2,8 +2,7 @@ use std::{fs, io::Write};
 
 use bip39::{Mnemonic, Seed};
 use dirs::home_dir;
-use qrcode::render::unicode;
-use qrcode::QrCode;
+use qrcode::{render::unicode, QrCode};
 use solana_sdk::{
     derivation_path::DerivationPath,
     signature::{write_keypair_file, Keypair},
@@ -36,11 +35,11 @@ pub fn generate_key() {
             if let Some(parent_dir) = key_dir.parent() {
                 if !parent_dir.exists() {
                     match fs::create_dir_all(parent_dir) {
-                        Ok(_) => {}
+                        Ok(_) => {},
                         Err(e) => {
                             println!("  Failed to create directory for wallet: {}", e);
                             return;
-                        }
+                        },
                     }
                 }
             }
@@ -53,12 +52,8 @@ pub fn generate_key() {
                         .open(&config_path)
                         .expect("Failed to open configuration file for appending.");
 
-                    writeln!(
-                        file,
-                        "{}",
-                        key_dir.to_str().expect("Failed to key_dir.to_str()")
-                    )
-                    .expect("Failed to write keypair path to configuration file.");
+                    writeln!(file, "{}", key_dir.to_str().expect("Failed to key_dir.to_str()"))
+                        .expect("Failed to write keypair path to configuration file.");
 
                     let pubkey = new_key.pubkey();
 
@@ -82,10 +77,10 @@ pub fn generate_key() {
                     println!("    {}", phrase);
                     println!("\n  New Mining Hot Wallet Public Key: {}", pubkey);
                     println!("\n  The QR code above can be scanned with Phantom/Solflare wallet to fund this wallet for signup cost.");
-                }
+                },
                 Err(e) => {
                     println!("  Failed to write keypair to file: {}", e);
-                }
+                },
             }
         } else {
             println!("  Failed to get home directory from platform.");

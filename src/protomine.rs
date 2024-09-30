@@ -10,8 +10,10 @@ use drillx::equix;
 use futures_util::{SinkExt, StreamExt};
 use rayon::prelude::*;
 use solana_sdk::{signature::Keypair, signer::Signer};
-use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
-use std::sync::Once;
+use std::sync::{
+    atomic::{AtomicBool, AtomicU64, Ordering},
+    Once,
+};
 use tokio::sync::mpsc::{unbounded_channel, UnboundedSender};
 use tokio_tungstenite::{
     connect_async,
@@ -99,11 +101,8 @@ fn optimized_mining_rayon(
             let mut memory = equix::SolverMemory::new();
             let core_range_size = (nonce_range.end - nonce_range.start) / cores as u64;
             let core_start = nonce_range.start + core_id as u64 * core_range_size;
-            let core_end = if core_id == cores - 1 {
-                nonce_range.end
-            } else {
-                core_start + core_range_size
-            };
+            let core_end =
+                if core_id == cores - 1 { nonce_range.end } else { core_start + core_range_size };
 
             // let mut core_best = MiningResult::new();
             let mut core_best = MiningResult::new(core_start);
@@ -112,9 +111,9 @@ fn optimized_mining_rayon(
             'outer: for chunk_start in (core_start..core_end).step_by(chunk_size as usize) {
                 let chunk_end = (chunk_start + chunk_size).min(core_end);
                 for nonce in chunk_start..chunk_end {
-                    // MI, vanilla, duplicated with below % 100 part, cause default solution returned without any calc.
-                    // if start_time.elapsed().as_secs() >= cutoff_time {
-                    //     break 'outer;
+                    // MI, vanilla, duplicated with below % 100 part, cause default solution
+                    // returned without any calc. if start_time.elapsed().
+                    // as_secs() >= cutoff_time {     break 'outer;
                     // }
 
                     if stop_signal.load(Ordering::Relaxed) {
@@ -155,13 +154,7 @@ fn optimized_mining_rayon(
 
     let best_result = results
         .into_iter()
-        .reduce(|acc, x| {
-            if x.difficulty > acc.difficulty {
-                x
-            } else {
-                acc
-            }
-        })
+        .reduce(|acc, x| if x.difficulty > acc.difficulty { x } else { acc })
         // .unwrap_or_else(MiningResult::new);
         .unwrap_or(MiningResult::new(nonce_range.start));
 
@@ -186,20 +179,15 @@ pub async fn protomine(args: MineArgs, key: Keypair, url: String, unsecure: bool
     }
 
     loop {
-        let now = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .expect("Time went backwards")
-            .as_secs();
+        let now =
+            SystemTime::now().duration_since(UNIX_EPOCH).expect("Time went backwards").as_secs();
 
         let ts_msg = now.to_le_bytes();
 
         let sig = key.sign_message(&ts_msg);
 
-        let mut ws_url_str = if unsecure {
-            format!("ws://{}", url)
-        } else {
-            format!("wss://{}", url)
-        };
+        let mut ws_url_str =
+            if unsecure { format!("ws://{}", url) } else { format!("wss://{}", url) };
 
         if !ws_url_str.ends_with('/') {
             ws_url_str.push('/');
@@ -327,27 +315,26 @@ pub async fn protomine(args: MineArgs, key: Keypair, url: String, unsecure: bool
                             bin_data.extend(sig);
 
                             let _ = sender.send(Message::Binary(bin_data)).await;
-                        }
+                        },
                     }
                 }
 
                 let _ = receiver_thread.await;
-            }
+            },
             Err(e) => {
                 match e {
-                    tokio_tungstenite::tungstenite::Error::Http(e) => {
+                    tokio_tungstenite::tungstenite::Error::Http(e) =>
                         if let Some(body) = e.body() {
                             eprintln!("Error: {:?}", String::from_utf8_lossy(body));
                         } else {
                             eprintln!("Http Error: {:?}", e);
-                        }
-                    }
+                        },
                     _ => {
                         eprintln!("Error: {:?}", e);
-                    }
+                    },
                 }
                 tokio::time::sleep(Duration::from_secs(3)).await;
-            }
+            },
         }
     }
 }
@@ -359,7 +346,7 @@ fn process_message(
     match msg {
         Message::Text(t) => {
             println!("\n>>> Server Message: \n{}\n", t);
-        }
+        },
         Message::Binary(b) => {
             let message_type = b[0];
             match message_type {
@@ -401,25 +388,25 @@ fn process_message(
 
                         let _ = message_channel.send(msg);
                     }
-                }
+                },
                 _ => {
                     println!("Failed to parse server message type");
-                }
+                },
             }
-        }
+        },
         Message::Ping(v) => {
             println!("Got Ping: {:?}", v);
-        }
+        },
         Message::Pong(v) => {
             println!("Got Pong: {:?}", v);
-        }
+        },
         Message::Close(v) => {
             println!("Got Close: {:?}", v);
             return ControlFlow::Break(());
-        }
+        },
         _ => {
             println!("Got invalid message data");
-        }
+        },
     }
 
     ControlFlow::Continue(())

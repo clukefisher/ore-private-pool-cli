@@ -32,6 +32,8 @@ Private pool operators can discuss and help each other at:
 
 ## Install
 
+ORE Private Pool installation consists of 2 parts: server and clients. One server will serve multiple clients. The following is for client installation (ore-private-pool-cli). To install server, please refer to [server installation(ore-private-pool-srv)](https://crates.io/crates/ore-private-pool-srv).
+
 To install the private pool client, 2 approaches are recommended:
 
 **Approach One**: install from crates.io directly, use [cargo](https://doc.rust-lang.org/cargo/getting-started/installation.html):

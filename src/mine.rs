@@ -1,27 +1,32 @@
 use base64::prelude::*;
 use clap::{arg, Parser};
 use drillx::equix;
-use futures_util::stream::SplitSink;
-use futures_util::{SinkExt, StreamExt};
+use futures_util::{stream::SplitSink, SinkExt, StreamExt};
 use solana_sdk::{signature::Keypair, signer::Signer};
-use std::mem::size_of;
-use std::sync::atomic::{AtomicBool, Ordering};
 use std::{
+    mem::size_of,
     ops::{ControlFlow, Range},
-    sync::Arc,
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        Arc,
+    },
     time::{Duration, Instant, SystemTime, UNIX_EPOCH},
 };
-use tokio::net::TcpStream;
-use tokio::sync::mpsc::UnboundedReceiver;
-use tokio::sync::{mpsc::UnboundedSender, Mutex};
+use tokio::{
+    net::TcpStream,
+    sync::{
+        mpsc::{UnboundedReceiver, UnboundedSender},
+        Mutex,
+    },
+};
 use tokio_tungstenite::{
     connect_async,
     tungstenite::{
         handshake::client::{generate_key, Request},
         Message,
     },
+    MaybeTlsStream, WebSocketStream,
 };
-use tokio_tungstenite::{MaybeTlsStream, WebSocketStream};
 
 #[derive(Debug)]
 pub struct ServerMessagePoolSubmissionResult {
@@ -202,20 +207,15 @@ pub async fn mine(args: MineArgs, key: Keypair, url: String, unsecure: bool) {
 
     loop {
         // MI: lan addr is allowed, example: 172.xx.xx.xxx:3000
-        let mut ws_url_str = if unsecure {
-            format!("ws://{}/v1/ws", url)
-        } else {
-            format!("wss://{}/v1/ws", url)
-        };
+        let mut ws_url_str =
+            if unsecure { format!("ws://{}/v1/ws", url) } else { format!("wss://{}/v1/ws", url) };
 
-        if ws_url_str.chars().last().unwrap() != '/' {
-            ws_url_str.push('/');
-        }
+        // if ws_url_str.chars().last().unwrap() != '/' {
+        //     ws_url_str.push('/');
+        // }
 
-        let timestamp = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .expect("Time went backwards")
-            .as_secs();
+        let timestamp =
+            SystemTime::now().duration_since(UNIX_EPOCH).expect("Time went backwards").as_secs();
 
         let ts_msg = timestamp.to_le_bytes();
         let sig = key.sign_message(&ts_msg);
@@ -315,7 +315,8 @@ pub async fn mine(args: MineArgs, key: Keypair, url: String, unsecure: bool) {
                                     println!("Start mining... will cutoff in: {}s", cutoff);
                                     let hash_timer = Instant::now();
                                     let core_ids = core_affinity::get_core_ids().unwrap();
-                                    // let max_cores = std::thread::available_parallelism().unwrap().get();
+                                    // let max_cores =
+                                    // std::thread::available_parallelism().unwrap().get();
                                     let max_cores = core_ids.len();
                                     if threads > max_cores as u32 {
                                         println!(
@@ -330,7 +331,8 @@ pub async fn mine(args: MineArgs, key: Keypair, url: String, unsecure: bool) {
                                         .into_iter()
                                         .map(|i| {
                                             let running = running.clone(); // Capture running in thread
-                                            let processor_submission_sender = processor_submission_sender.clone();
+                                            let _processor_submission_sender =
+                                                processor_submission_sender.clone();
                                             std::thread::spawn({
                                                 let mut memory = equix::SolverMemory::new();
                                                 move || {
@@ -363,16 +365,17 @@ pub async fn mine(args: MineArgs, key: Keypair, url: String, unsecure: bool) {
                                                             total_hashes += 1;
                                                             let difficulty = hx.difficulty();
                                                             if difficulty.gt(&best_difficulty) {
-                                                                let thread_submission = ThreadSubmission {
-                                                                    nonce,
-                                                                    difficulty,
-                                                                    d: hx.d,
-                                                                };
-                                                                let _ = processor_submission_sender.send(
-                                                                    MessageSubmissionProcessor::Submission(
-                                                                        thread_submission,
-                                                                    ),
-                                                                );
+                                                                // MI: vanilla. solution-level, too much submissions, comment out
+                                                                // let thread_submission = ThreadSubmission {
+                                                                //     nonce,
+                                                                //     difficulty,
+                                                                //     d: hx.d,
+                                                                // };
+                                                                // let _ = processor_submission_sender.send(
+                                                                //     MessageSubmissionProcessor::Submission(
+                                                                //         thread_submission,
+                                                                //     ),
+                                                                // );
                                                                 best_nonce = nonce;
                                                                 best_difficulty = difficulty;
                                                                 best_hash = hx;
@@ -385,7 +388,11 @@ pub async fn mine(args: MineArgs, key: Keypair, url: String, unsecure: bool) {
                                                         }
 
                                                         if nonce % 100 == 0 {
-                                                            if hash_timer.elapsed().as_secs().ge(&cutoff) {
+                                                            if hash_timer
+                                                                .elapsed()
+                                                                .as_secs()
+                                                                .ge(&cutoff)
+                                                            {
                                                                 if best_difficulty.ge(&MIN_DIFF) {
                                                                     break 'challenge;
                                                                 }
@@ -395,6 +402,19 @@ pub async fn mine(args: MineArgs, key: Keypair, url: String, unsecure: bool) {
                                                         // Increment nonce
                                                         nonce += 1;
                                                     }
+
+                                                    // // MI: upon cutoff, submit thread-level best solution to server, non-necessary submission
+                                                    // let thread_cutoff_submission =
+                                                    //     ThreadSubmission {
+                                                    //         nonce: best_nonce,
+                                                    //         difficulty: best_difficulty,
+                                                    //         d: best_hash.d,
+                                                    //     };
+                                                    // let _ = processor_submission_sender.send(
+                                                    //     MessageSubmissionProcessor::Submission(
+                                                    //         thread_cutoff_submission,
+                                                    //     ),
+                                                    // );
 
                                                     // Return the best nonce
                                                     Some((
@@ -409,9 +429,9 @@ pub async fn mine(args: MineArgs, key: Keypair, url: String, unsecure: bool) {
                                         .collect::<Vec<_>>();
 
                                     // Join handles and return best nonce
-                                    let mut _best_nonce: u64 = 0;
+                                    let mut best_nonce: u64 = 0;
                                     let mut best_difficulty = 0;
-                                    let mut _best_hash = drillx::Hash::default();
+                                    let mut best_hash = drillx::Hash::default();
                                     let mut total_nonces_checked = 0;
                                     for h in handles {
                                         if let Ok(Some((nonce, difficulty, hash, nonces_checked))) =
@@ -420,11 +440,23 @@ pub async fn mine(args: MineArgs, key: Keypair, url: String, unsecure: bool) {
                                             total_nonces_checked += nonces_checked;
                                             if difficulty > best_difficulty {
                                                 best_difficulty = difficulty;
-                                                _best_nonce = nonce;
-                                                _best_hash = hash;
+                                                best_nonce = nonce;
+                                                best_hash = hash;
                                             }
                                         }
                                     }
+
+                                    // MI: upon cutoff, submit client-level best solution to server. compatible with client version V0
+                                    let client_cutoff_submission = ThreadSubmission {
+                                        nonce: best_nonce,
+                                        difficulty: best_difficulty,
+                                        d: best_hash.d,
+                                    };
+                                    let _ = processor_submission_sender.send(
+                                        MessageSubmissionProcessor::Submission(
+                                            client_cutoff_submission,
+                                        ),
+                                    );
 
                                     let hash_time = hash_timer.elapsed();
 
@@ -466,7 +498,7 @@ pub async fn mine(args: MineArgs, key: Keypair, url: String, unsecure: bool) {
                                         let _ =
                                             message_sender.send(Message::Binary(bin_data)).await;
                                     }
-                                }
+                                },
                                 ServerMessage::PoolSubmissionResult(data) => {
                                     let message = format!(
                                         "\n\nPool Submitted Difficulty: {}\nPool Earned:  {:.11} ORE\nPool Balance: {:.11} ORE\nTop Stake:    {:.11} ORE\nPool Multiplier: {:.2}x\n----------------------\nActive Miners: {}\n----------------------\nMiner Submitted Difficulty: {}\nMiner Earned: {:.11} ORE\n{:.2}% of total pool reward\n",
@@ -483,14 +515,14 @@ pub async fn mine(args: MineArgs, key: Keypair, url: String, unsecure: bool) {
                                     let _ = data.challenge;
                                     let _ = data.best_nonce;
                                     println!("{}", message);
-                                }
+                                },
                             }
                         }
                     });
                 }
 
                 let _ = receiver_thread.await;
-            }
+            },
             Err(e) => {
                 match e {
                     tokio_tungstenite::tungstenite::Error::Http(e) => {
@@ -499,13 +531,13 @@ pub async fn mine(args: MineArgs, key: Keypair, url: String, unsecure: bool) {
                         } else {
                             println!("Http Error: {:?}", e);
                         }
-                    }
+                    },
                     _ => {
                         println!("Error: {:?}", e);
-                    }
+                    },
                 }
                 tokio::time::sleep(Duration::from_secs(3)).await;
-            }
+            },
         }
     }
 }
@@ -517,7 +549,7 @@ fn process_message(
     match msg {
         Message::Text(t) => {
             println!("\n>>> Server Message: \n{}\n", t);
-        }
+        },
         Message::Binary(b) => {
             let message_type = b[0];
             match message_type {
@@ -559,31 +591,31 @@ fn process_message(
 
                         let _ = message_channel.send(msg);
                     }
-                }
+                },
                 1 => {
                     let msg = ServerMessage::PoolSubmissionResult(
                         ServerMessagePoolSubmissionResult::new_from_bytes(b),
                     );
                     let _ = message_channel.send(msg);
-                }
+                },
                 _ => {
                     println!("Failed to parse server message type");
-                }
+                },
             }
-        }
+        },
         Message::Ping(v) => {
             println!("Got Ping: {:?}", v);
-        }
+        },
         Message::Pong(v) => {
             println!("Got Pong: {:?}", v);
-        }
+        },
         Message::Close(v) => {
             println!("Got Close: {:?}", v);
             return ControlFlow::Break(());
-        }
+        },
         _ => {
             println!("Got invalid message data");
-        }
+        },
     }
 
     ControlFlow::Continue(())
@@ -609,11 +641,8 @@ async fn submission_processor(
                     let mut hash_nonce_message = [0; 24];
                     hash_nonce_message[0..16].copy_from_slice(&best_hash_bin);
                     hash_nonce_message[16..24].copy_from_slice(&best_nonce_bin);
-                    let signature = key
-                        .sign_message(&hash_nonce_message)
-                        .to_string()
-                        .as_bytes()
-                        .to_vec();
+                    let signature =
+                        key.sign_message(&hash_nonce_message).to_string().as_bytes().to_vec();
 
                     let mut bin_data = [0; 57];
                     bin_data[00..1].copy_from_slice(&message_type.to_le_bytes());
@@ -628,13 +657,13 @@ async fn submission_processor(
                     let _ = message_sender.send(Message::Binary(bin_vec)).await;
                     drop(message_sender);
                 }
-            }
+            },
             MessageSubmissionProcessor::Reset => {
                 best_diff = 0;
 
                 // Sleep for 2 seconds waiting for next mining mission.
                 tokio::time::sleep(Duration::from_secs(2)).await;
-            }
+            },
         }
     }
 }
