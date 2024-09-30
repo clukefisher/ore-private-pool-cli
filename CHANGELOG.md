@@ -11,6 +11,12 @@ Possible log types:
 -   `[fixed]` for any bug fixes.
 -   `[security]` to invite users to upgrade in case of vulnerabilities.
 
+### v1.0.0 (2024-09-30)
+
+-   [added] key generation sub-command(keygen) utility.
+-   [changed] client version upgraded to V1.
+-   [changed] README.
+
 ### v0.6.0 (2024-09-20)
 
 -   [added] project local .cargo directory for config.toml

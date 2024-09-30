@@ -1,5 +1,8 @@
 use clap::{Parser, Subcommand};
-use solana_sdk::signature::read_keypair_file;
+use dirs::home_dir;
+use solana_sdk::signature::{read_keypair_file, Keypair};
+use std::fs;
+use std::path::PathBuf;
 
 mod generate_key;
 mod mine;
@@ -50,8 +53,32 @@ async fn main() {
 
     let base_url = args.url;
     let unsecure_conn = args.use_http;
-    let key = read_keypair_file(args.keypair.clone())
-        .expect(&format!("Failed to load keypair from file: {}", args.keypair));
+
+    // Does the config file exist? If not, create one
+    let config_path = PathBuf::from(CONFIG_FILE);
+    if !config_path.exists() {
+        fs::File::create(&config_path).expect("Failed to create configuration file.");
+    }
+
+    // let key = read_keypair_file(args.keypair.clone())
+    //     .expect(&format!("Failed to load keypair from file: {}", args.keypair));
+    let key: Keypair;
+    // Check if keypair path is provided or fallback to the default
+    let keypair_path = expand_tilde(&args.keypair);
+    let keypair_exists = PathBuf::from(&keypair_path).exists();
+
+    if keypair_exists {
+        // Keypair path is provided and exists, proceed directly
+        key = read_keypair_file(&keypair_path)
+            .expect(&format!("Failed to load keypair from file: {}", keypair_path));
+    } else {
+        // The keypair does not exist, exit program
+        eprintln!(
+            "Keypair not found. Please provide one or generate a new keypair with keygen sub-command. Exiting program."
+        );
+        std::process::exit(0);
+    }
+
     match args.command {
         Commands::Mine(args) => {
             mine::mine(args, key, base_url, unsecure_conn).await;
@@ -63,4 +90,13 @@ async fn main() {
             generate_key::generate_key();
         },
     }
+}
+
+fn expand_tilde(path: &str) -> String {
+    if path.starts_with("~") {
+        if let Some(home_dir) = home_dir() {
+            return path.replacen("~", &home_dir.to_string_lossy(), 1);
+        }
+    }
+    path.to_string()
 }
