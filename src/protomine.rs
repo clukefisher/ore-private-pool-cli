@@ -301,6 +301,7 @@ pub async fn protomine(args: MineArgs, key: Keypair, url: String, unsecure: bool
 
                             tokio::time::sleep(Duration::from_secs(1)).await;
 
+                            // Ready up again
                             let now = SystemTime::now()
                                 .duration_since(UNIX_EPOCH)
                                 .expect("Time went backwards")
@@ -323,12 +324,13 @@ pub async fn protomine(args: MineArgs, key: Keypair, url: String, unsecure: bool
             },
             Err(e) => {
                 match e {
-                    tokio_tungstenite::tungstenite::Error::Http(e) =>
+                    tokio_tungstenite::tungstenite::Error::Http(e) => {
                         if let Some(body) = e.body() {
                             eprintln!("Error: {:?}", String::from_utf8_lossy(body));
                         } else {
                             eprintln!("Http Error: {:?}", e);
-                        },
+                        }
+                    },
                     _ => {
                         eprintln!("Error: {:?}", e);
                     },

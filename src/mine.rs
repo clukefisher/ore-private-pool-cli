@@ -6,10 +6,7 @@ use solana_sdk::{signature::Keypair, signer::Signer};
 use std::{
     mem::size_of,
     ops::{ControlFlow, Range},
-    sync::{
-        atomic::{AtomicBool, Ordering},
-        Arc,
-    },
+    sync::Arc,
     time::{Duration, Instant, SystemTime, UNIX_EPOCH},
 };
 use tokio::{
@@ -202,7 +199,6 @@ pub struct MineArgs {
 const MIN_DIFF: u32 = 5; // MI, align with server
 
 pub async fn mine(args: MineArgs, key: Keypair, url: String, unsecure: bool) {
-    let running = Arc::new(AtomicBool::new(true));
     let key = Arc::new(key);
 
     loop {
@@ -248,10 +244,25 @@ pub async fn mine(args: MineArgs, key: Keypair, url: String, unsecure: bool) {
                 let (message_sender, mut message_receiver) =
                     tokio::sync::mpsc::unbounded_channel::<ServerMessage>();
 
+                // let receiver_thread = tokio::spawn(async move {
+                //     while let Some(Ok(message)) = receiver.next().await {
+                //         if process_message(message, message_sender.clone()).is_break() {
+                //             break;
+                //         }
+                //     }
+                // });
+
                 let receiver_thread = tokio::spawn(async move {
-                    while let Some(Ok(message)) = receiver.next().await {
-                        if process_message(message, message_sender.clone()).is_break() {
-                            break;
+                    loop {
+                        if let Some(Ok(message)) = receiver.next().await {
+                            if process_message(message, message_sender.clone()).is_break() {
+                                break;
+                            }
+                        } else {
+                            // receiver got None, the stream ended.
+                            // None is returned when the sender half has dropped, indicating that no further values can be received.
+                            eprintln!("The sender half has been dropped. No more messages will be received. Exit the loop.");
+                            break; // exit loop
                         }
                     }
                 });
@@ -296,12 +307,7 @@ pub async fn mine(args: MineArgs, key: Keypair, url: String, unsecure: bool) {
                         let processor_submission_sender =
                             Arc::new(solution_processor_message_sender.clone());
                         let key = key.clone();
-                        let running = running.clone();
                         async move {
-                            if !running.load(Ordering::SeqCst) {
-                                return;
-                            }
-
                             match msg {
                                 ServerMessage::StartMining(challenge, nonce_range, cutoff) => {
                                     println!(
@@ -330,7 +336,6 @@ pub async fn mine(args: MineArgs, key: Keypair, url: String, unsecure: bool) {
                                     let handles = core_ids
                                         .into_iter()
                                         .map(|i| {
-                                            let running = running.clone(); // Capture running in thread
                                             let _processor_submission_sender =
                                                 processor_submission_sender.clone();
                                             std::thread::spawn({
@@ -351,11 +356,6 @@ pub async fn mine(args: MineArgs, key: Keypair, url: String, unsecure: bool) {
                                                     let mut total_hashes: u64 = 0;
 
                                                     'challenge: loop {
-                                                        // Check if Ctrl+C was pressed
-                                                        if !running.load(Ordering::SeqCst) {
-                                                            return None;
-                                                        }
-
                                                         // Create hash
                                                         for hx in drillx::hashes_with_memory(
                                                             &mut memory,
@@ -384,7 +384,7 @@ pub async fn mine(args: MineArgs, key: Keypair, url: String, unsecure: bool) {
 
                                                         // Exit if processed nonce range
                                                         if nonce >= nonce_range.end {
-                                                            break;
+                                                            break 'challenge;
                                                         }
 
                                                         if nonce % 100 == 0 {
